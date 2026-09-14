@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>МАКС — квиз-карточки</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #ff6b00, #ff8c3a);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: #1a1a1a;
+    }
+    .game-box {
+        background: white;
+        border-radius: 32px;
+        padding: 32px 28px;
+        max-width: 540px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+        font-size: 1.7rem;
+        font-weight: 900;
+        color: #ff6b00;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 22px;
+        font-size: 0.95rem;
+    }
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    .progress-bar {
+        background: #f0f0f0;
+        height: 8px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        background: #ff6b00;
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.4s ease;
+        width: 0%;
+    }
+    .card-scene {
+        perspective: 1200px;
+        height: 280px;
+        margin-bottom: 20px;
+        cursor: pointer;
+    }
+    .card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.7s;
+        transform-style: preserve-3d;
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        border-radius: 24px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .card-front {
+        background: linear-gradient(135deg, #fff8f0, #ffe5d1);
+        border: 3px solid #ff6b00;
+    }
+    .card-back {
+        background: linear-gradient(135deg, #ff6b00, #ff8c3a);
+        color: white;
+        transform: rotateY(180deg);
+    }
+    .card-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 14px;
+        opacity: 0.7;
+    }
+    .card-text {
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+    .card-hint {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 18px;
+    }
+    .card-back .card-hint { color: rgba(255,255,255,0.7); }
+    .check-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .check-btn {
+        flex: 1;
+        padding: 14px;
+        border: none;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.2s;
+    }
+    .check-btn.no { background: #ffe0e0; color: #c0392b; }
+    .check-btn.no:hover { background: #ffcccc; }
+    .check-btn.yes { background: #d3f9d8; color: #2b8a3e; }
+    .check-btn.yes:hover { background: #b2f2bb; }
+    .hidden { display: none !important; }
+    .welcome { text-align: center; }
+    .welcome h2 {
+        color: #ff6b00;
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+    }
+    .welcome p {
+        color: #444;
+        margin-bottom: 20px;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+    .big-btn {
+        display: inline-block;
+        background: #ff6b00;
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 40px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.2s;
+        box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+    }
+    .big-btn:hover { background: #e05e00; transform: scale(1.03); }
+    .big-btn.link { text-decoration: none; display: inline-block; }
+    .category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    .category-btn {
+        background: #f5f0eb;
+        border: 2px solid transparent;
+        border-radius: 20px;
+        padding: 18px 20px;
+        cursor: pointer;
+        text-align: left;
+        font-family: inherit;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .category-btn:hover {
+        background: #ffe5d1;
+        border-color: #ff6b00;
+        transform: translateX(4px);
+    }
+    .category-btn .emoji {
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+    .category-btn .cat-text { flex: 1; }
+    .category-btn .cat-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #1a1a1a;
+        margin-bottom: 2px;
+    }
+    .category-btn .cat-desc {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    .result { text-align: center; }
+    .result h2 {
+        color: #ff6b00;
+        font-size: 1.7rem;
+        margin-bottom: 12px;
+    }
+    .score {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #ff6b00;
+        margin: 12px 0 6px;
+    }
+    .score-sub {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+    .result p {
+        color: #444;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    .study-folder {
+        background: #fff8f0;
+        border: 2px dashed #ff6b00;
+        border-radius: 20px;
+        padding: 18px;
+        margin: 20px 0;
+        text-align: left;
+    }
+    .study-folder h3 {
+        color: #ff6b00;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .study-folder .folder-item {
+        background: white;
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        color: #444;
+        line-height: 1.4;
+        border-left: 3px solid #ff6b00;
+    }
+    .study-folder .folder-item:last-child { margin-bottom: 0; }
+    .study-folder .empty {
+        color: #999;
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 8px;
+    }
+    .restart-btn {
+        display: block;
+        margin: 14px auto 0;
+        background: none;
+        border: 2px solid #ddd;
+        color: #666;
+        padding: 10px 24px;
+        border-radius: 40px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.95rem;
+    }
+    .restart-btn:hover { border-color: #ff6b00; color: #ff6b00; }
+    .study-btn {
+        display: inline-block;
+        background: #ff6b00;
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 40px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        font-family: inherit;
+        margin-top: 8px;
+        transition: 0.2s;
+    }
+    .study-btn:hover { background: #e05e00; }
+</style>
+</head>
+<body>
+<div class="game-box" id="gameBox">
+
+    <!-- ===== ЭКРАН 1: ПРИВЕТСТВИЕ ===== -->
+    <div class="welcome" id="welcomeScreen">
+        <h1>🧡 МАКС: квиз-карточки</h1>
+        <p class="subtitle">Проверьте свои знания о репетиторах</p>
+        <h2>Как играть?</h2>
+        <p>
+            Вам показывается карточка с вопросом.<br>
+            Подумайте, потом <b>нажмите на карточку</b> — она перевернётся.<br>
+            Ответьте честно: угадали или нет.<br>
+            Неугаданные карточки отправятся в <b>папку «Изучить ещё раз»</b>.
+        </p>
+        <button class="big-btn" onclick="showCategoryScreen()">🚀 Начать</button>
+    </div>
+
+    <!-- ===== ЭКРАН 2: ВЫБОР КАТЕГОРИИ ===== -->
+    <div class="welcome hidden" id="categoryScreen">
+        <h1>Кто вы?</h1>
+        <p class="subtitle">Выберите свою категорию — вопросы подберутся под вас</p>
+        <div class="category-list">
+            <button class="category-btn" onclick="startGame('parent')">
+                <span class="emoji">👨‍👩‍👧</span>
+                <span class="cat-text">
+                    <div class="cat-title">Родитель</div>
+                    <div class="cat-desc">Ищу репетитора для ребёнка 1–8 класса</div>
+                </span>
+            </button>
+            <button class="category-btn" onclick="startGame('student')">
+                <span class="emoji">🎓</span>
+                <span class="cat-text">
+                    <div class="cat-title">Ученик (школьник)</div>
+                    <div class="cat-desc">Готовлюсь к ОГЭ/ЕГЭ, ищу сам</div>
+                </span>
+            </button>
+            <button class="category-btn" onclick="startGame('university')">
+                <span class="emoji">📚</span>
+                <span class="cat-text">
+                    <div class="cat-title">Студент</div>
+                    <div class="cat-desc">Нужна помощь с предметами в вузе</div>
+                </span>
+            </button>
+            <button class="category-btn" onclick="startGame('tutor')">
+                <span class="emoji">🧑‍🏫</span>
+                <span class="cat-text">
+                    <div class="cat-title">Репетитор</div>
+                    <div class="cat-desc">Хочу найти учеников и вести занятия</div>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== ЭКРАН 3: ИГРА ===== -->
+    <div id="gameScreen" class="hidden">
+        <div class="progress-info">
+            <span id="cardCounter">Карточка 1</span>
+            <span id="scoreDisplay">✅ 0</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+        <div class="card-scene" id="cardScene" onclick="flipCard()">
+            <div class="card" id="card">
+                <div class="card-face card-front">
+                    <div class="card-label">Вопрос</div>
+                    <div class="card-text" id="frontText"></div>
+                    <div class="card-hint">👆 Нажмите, чтобы увидеть ответ</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="card-label">Ответ</div>
+                    <div class="card-text" id="backText"></div>
+                    <div class="card-hint">Нажмите, чтобы вернуться</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="check-buttons hidden" id="checkButtons">
+            <button class="check-btn no" onclick="answer(false)">❌ Не угадал</button>
+            <button class="check-btn yes" onclick="answer(true)">✅ Угадал</button>
+        </div>
+    </div>
+
+    <!-- ===== ЭКРАН 4: РЕЗУЛЬТАТ ===== -->
+    <div class="result hidden" id="resultScreen">
+        <h2>🎉 Игра завершена!</h2>
+        <div class="score" id="finalScore">0 / 0</div>
+        <div class="score-sub" id="finalMessage"></div>
+
+        <div class="study-folder" id="studyFolder">
+            <h3>📂 Изучить ещё раз</h3>
+            <div id="studyFolderItems"></div>
+        </div>
+
+        <button class="study-btn hidden" id="studyAgainBtn" onclick="studyAgain()">
+            🔁 Пройти папку заново
+        </button>
+
+        <p style="margin-top: 20px;">Хотите найти репетитора прямо сейчас?</p>
+        <a href="https://kristishkaa7.github.io/max-education/" target="_blank" class="big-btn link">
+            Перейти на МАКС →
+        </a>
+        <button class="restart-btn" onclick="restartGame()">↻ Выбрать другую категорию</button>
+    </div>
+
+</div>
+
+<script>
+    // ===== БАЗА ВОПРОСОВ ПО КАТЕГОРИЯМ =====
+    const QUESTIONS = {
+        parent: [
+            { q: "С какого класса можно заниматься с репетитором?", a: "С 1 по 11 класс — для любого возраста и программы." },
+            { q: "Сколько длится пробный урок на МАКС?", a: "40 минут — чтобы познакомиться и понять уровень." },
+            { q: "Что обязательно должно быть в профиле репетитора?", a: "Образование, опыт, сертификаты, отзывы и видео-визитка." },
+            { q: "Как безопасно оплатить занятие?", a: "Через платформу МАКС картой или SBP — не переводом на чужую карту." },
+            { q: "Что делать, если репетитор не подошёл ребёнку?", a: "Первый урок бесплатный, можно сразу выбрать другого." },
+            { q: "Куда идёт часть оплаты от занятий?", a: "7% от комиссии — в благотворительные фонды для детей." }
+        ],
+        student: [
+            { q: "Можно ли искать репетитора без родителей?", a: "Да, на МАКС ученики с 14 лет могут записаться сами." },
+            { q: "Как быстро можно найти репетитора к ОГЭ/ЕГЭ?", a: "За 10–15 минут: свайпаете карточки и выбираете подходящего." },
+            { q: "Как понять, что репетитор «на одной волне»?", a: "Посмотреть видео-визитку и почитать отзывы других учеников." },
+            { q: "Что делать, если не понимаешь объяснения репетитора?", a: "Попросить другого преподавателя — пробный урок бесплатный." },
+            { q: "Можно ли заниматься только онлайн?", a: "Да, фильтр «Онлайн» покажет только тех, кто работает через интернет." },
+            { q: "Как оплатить занятие самому?", a: "Через приложение картой или SBP — без участия родителей." }
+        ],
+        university: [
+            { q: "Помогает ли МАКС со студенческими предметами?", a: "Да, репетиторы есть по высшей математике, физике, программированию и другим вузовским дисциплинам." },
+            { q: "Можно ли подготовиться к сессии за короткий срок?", a: "Да, в фильтрах выбираете интенсив — репетитор составит сжатый план." },
+            { q: "Сколько стоит занятие для студента?", a: "От 900 ₽ за 60 минут, цена указана на каждой карточке." },
+            { q: "Есть ли репетиторы по программированию?", a: "Да, среди них — практикующие разработчики из IT-компаний." },
+            { q: "Можно ли заниматься ночью или рано утром?", a: "Репетитор сам ставит удобные слоты — можно найти и вечерние, и утренние." },
+            { q: "Что делать, если не понравился репетитор?", a: "Первый урок бесплатный, можно выбрать другого без потери денег." }
+        ],
+        tutor: [
+            { q: "Сколько стоит размещение анкеты на МАКС?", a: "Бесплатно. Комиссия удерживается только после успешного занятия." },
+            { q: "Обязательно ли загружать видео-визитку?", a: "Нет, но она повышает доверие и ускоряет поиск учеников в 3 раза." },
+            { q: "Что важно указать в портфолио?", a: "Образование, опыт, сертификаты, достижения учеников и отзывы." },
+            { q: "Можно ли самому выбирать расписание?", a: "Да, вы сами ставите слоты в календаре — гибкий график." },
+            { q: "Как часто приходят выплаты?", a: "Дважды в месяц, на карту или расчётный счёт." },
+            { q: "Есть ли бесплатные курсы повышения квалификации?", a: "Да, МАКС регулярно проводит курсы и выдаёт сертификаты." }
+        ]
+    };
+
+    // ===== СОСТОЯНИЕ =====
+    let currentCards = [];
+    let studyCards = [];
+    let current = 0;
+    let score = 0;
+    let isFlipped = false;
+
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const categoryScreen = document.getElementById('categoryScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const card = document.getElementById('card');
+    const frontText = document.getElementById('frontText');
+    const backText = document.getElementById('backText');
+    const cardCounter = document.getElementById('cardCounter');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const progressFill = document.getElementById('progressFill');
+    const checkButtons = document.getElementById('checkButtons');
+    const studyFolderItems = document.getElementById('studyFolderItems');
+    const studyAgainBtn = document.getElementById('studyAgainBtn');
+
+    function showCategoryScreen() {
+        welcomeScreen.classList.add('hidden');
+        categoryScreen.classList.remove('hidden');
+    }
+
+    function startGame(category) {
+        currentCards = [...QUESTIONS[category]];
+        studyCards = [];
+        current = 0;
+        score = 0;
+        categoryScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        renderCard();
+    }
+
+    function renderCard() {
+        if (current >= currentCards.length) {
+            showResult();
+            return;
+        }
+        const c = currentCards[current];
+        frontText.textContent = c.q;
+        backText.textContent = c.a;
+        card.classList.remove('flipped');
+        isFlipped = false;
+        checkButtons.classList.add('hidden');
+
+        cardCounter.textContent = `Карточка ${current + 1} из ${currentCards.length}`;
+        scoreDisplay.textContent = `✅ ${score}`;
+        progressFill.style.width = (current / currentCards.length) * 100 + '%';
+    }
+
+    function flipCard() {
+        if (isFlipped) {
+            card.classList.remove('flipped');
+            isFlipped = false;
+            checkButtons.classList.add('hidden');
+        } else {
+            card.classList.add('flipped');
+            isFlipped = true;
+            setTimeout(() => checkButtons.classList.remove('hidden'), 400);
+        }
+    }
+
+    function answer(correct) {
+        if (correct) {
+            score++;
+        } else {
+            studyCards.push(currentCards[current]);
+        }
+        current++;
+        renderCard();
+    }
+
+    function showResult() {
+        gameScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+
+        document.getElementById('finalScore').textContent = `${score} / ${currentCards.length}`;
+
+        let msg = '';
+        const percent = score / currentCards.length;
+        if (percent === 1) msg = '🏆 Идеально! Вы настоящий знаток!';
+        else if (percent >= 0.6) msg = '👍 Хороший результат!';
+        else msg = '📚 Есть куда расти — загляните в папку ниже!';
+
+        document.getElementById('finalMessage').textContent = msg;
+
+        if (studyCards.length === 0) {
+            studyFolderItems.innerHTML = '<div class="empty">🎉 Все карточки угаданы — папка пуста!</div>';
+            studyAgainBtn.classList.add('hidden');
+        } else {
+            studyFolderItems.innerHTML = studyCards.map(c =>
+                `<div class="folder-item"><b>Вопрос:</b> ${c.q}<br><b>Ответ:</b> ${c.a}</div>`
+            ).join('');
+            studyAgainBtn.classList.remove('hidden');
+        }
+
+        progressFill.style.width = '100%';
+    }
+
+    function studyAgain() {
+        if (studyCards.length === 0) return;
+        currentCards = [...studyCards];
+        studyCards = [];
+        current = 0;
+        score = 0;
+        resultScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        renderCard();
+    }
+
+    function restartGame() {
+        resultScreen.classList.add('hidden');
+        gameScreen.classList.add('hidden');
+        welcomeScreen.classList.add('hidden');
+        categoryScreen.classList.remove('hidden');
+        currentCards = [];
+        studyCards = [];
+        current = 0;
+        score = 0;
+    }
+</script>
+</body>
+</html>
